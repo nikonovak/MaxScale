@@ -184,6 +184,7 @@ int main(int argc, char* argv[])
     const char running_state[] = "Running";
     const char reset_query[] = "STOP SLAVE; RESET SLAVE ALL; RESET MASTER; SET GLOBAL read_only='OFF'";
     const char readonly_on_query[] = "SET GLOBAL read_only='ON'";
+    const char rlag_log_pattern[] = "'server4' is excluded from query routing";
 
     TestConnections::require_repl_version("10.2.3"); // Delayed replication needs this.
     TestConnections test(argc, argv);
@@ -201,7 +202,7 @@ int main(int argc, char* argv[])
     test.maxscales->wait_for_monitor(2);
     auto maxconn = test.maxscales->open_rwsplit_connection();
     test.try_query(maxconn, "FLUSH TABLES;");
-    mysql_close(maxconn);
+
 
     test.maxscales->wait_for_monitor(1);
 
@@ -214,6 +215,10 @@ int main(int argc, char* argv[])
     check_group(test, "server3", 1);
     check_group(test, "server4", 0);
     check_rlag(test, "server4", 1, max_rlag);
+    // Need to send a read query so that rwsplit detects replication lag.
+    test.try_query("SHOW DATABASES;")
+    test.log_includes(0, rlag_log_pattern);
+    mysql_close(maxconn);
 
     test.tprintf("Test 2 - Set nodes 0 and 1 into read-only mode");
 
