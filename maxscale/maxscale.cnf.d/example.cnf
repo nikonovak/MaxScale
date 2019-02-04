@@ -10,11 +10,11 @@ address=slave1
 port=3306
 protocol=MariaDBBackend
 
-[server3]
-type=server
-address=slave2
-port=3306
-protocol=MariaDBBackend
+#[server3]
+#type=server
+#address=slave2
+#port=3306
+#protocol=MariaDBBackend
 
 # Monitor for the servers
 # This will keep MaxScale aware of the state of the servers.
@@ -24,12 +24,21 @@ protocol=MariaDBBackend
 [MariaDB-Monitor]
 type=monitor
 module=mariadbmon
-servers=server1,server2,server3
+#servers=server1,server2,server3
+servers=server1,server2
 user=maxuser
 passwd=maxpwd
-auto_failover=true
+auto_failover=false
 auto_rejoin=true
 enforce_read_only_slaves=1
+monitor_interval=60
+failover_timeout=5
+failcount=5
+master_failure_timeout=2
+verify_master_failure=true
+switchover_timeout=90
+detect_standalone_master=true
+events=master_down
 
 # Service definitions
 # Service Definition for a read-only service and a read/write splitting service.
@@ -40,7 +49,8 @@ enforce_read_only_slaves=1
 [Read-Only-Service]
 type=service
 router=readconnroute
-servers=server1,server2,server3
+#servers=server1,server2,server3
+servers=server1,server2
 user=maxuser
 passwd=maxpwd
 router_options=slave
@@ -51,7 +61,8 @@ router_options=slave
 [Read-Write-Service]
 type=service
 router=readwritesplit
-servers=server1,server2,server3
+#servers=server1,server2,server3
+servers=server1,server2
 user=maxuser
 passwd=maxpwd
 master_failure_mode=fail_on_write
